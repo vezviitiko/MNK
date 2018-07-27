@@ -34,6 +34,7 @@ coord test output
 
 pow(pow(obsVect[0][0], 2) + pow(obsVect[1][0], 2) + pow(obsVect[2][0], 2) , 0.5) = 7904.54376544306
 */
+
 CONSOLE_APP_MAIN
 {
 	Vector <InputData> inDatVect;
@@ -55,9 +56,10 @@ CONSOLE_APP_MAIN
 */
 	
 	//Попробуем использовать модельные измерения
-	double xx = -3782627.48060055 / 1000.;
-	double yy = 706759.897227085 / 1000.;
-	double zz = 6330779.72431116 / 1000.;
+	
+	double xx = -3782.62748060055;
+	double yy = 706.759897227085;
+	double zz = 6330.77972431116;
 
 	//Эфемериды аппаратов
 	double ephem[5][3];
@@ -112,6 +114,7 @@ Coord NewNavProb(Vector <InputData> &inData, Vector <Ephemeris> &eph){
 		//roApr.Add(pow(pow(eph[i].x - x[0], 2), 0.5));
 	}
 	
+	/*
 	//Вычислим матрицу топоцентрических направлений
 	H.Clear();
 	for (int i = 0; i < roApr.GetCount(); i++){
@@ -120,6 +123,7 @@ Coord NewNavProb(Vector <InputData> &inData, Vector <Ephemeris> &eph){
 		double hZ = (eph[i].z - x[2]) / roApr[i];
 		H.Add(hLine(hX, hY, hZ));
 	}
+	*/
 	
 	//Вычислим произведение транспонированной матрицы и квадрата матрицы коррекции
 	double W[5][5] ={{1.,0,0,0,0},
@@ -138,7 +142,7 @@ Coord NewNavProb(Vector <InputData> &inData, Vector <Ephemeris> &eph){
 		LOG(AsString(WMatr[i][0]) << " " << AsString(WMatr[i][1]) << " " << AsString(WMatr[i][2]) << " " << AsString(WMatr[i][3]) << " " << AsString(WMatr[i][4]));
 	}
 	
-	for (int ig = 0; ig < 10; ig++){
+	for (int ig = 0; ig < 100; ig++){
 		/*
 		w1 = 1796.83516077875
 		w2 = 1276.08421901684
@@ -150,6 +154,18 @@ Coord NewNavProb(Vector <InputData> &inData, Vector <Ephemeris> &eph){
 		w3 = 4470350.91362187
 		w4 = 27188349.3342348
 		*/
+		
+		//Вычислим матрицу топоцентрических направлений
+		H.Clear();
+		for (int i = 0; i < roApr.GetCount(); i++){
+			double hX = (eph[i].x - x[0]) / roApr[i];
+			double hY = (eph[i].y - x[1]) / roApr[i];
+			double hZ = (eph[i].z - x[2]) / roApr[i];
+			H.Add(hLine(hX, hY, hZ));
+		}
+		LOG("==== x =====");
+		
+		LOG(AsString(x[0]) << " " << AsString(x[1]) << " " << AsString(x[2]));
 		
 		
 		LOG("Original matr ");
@@ -290,6 +306,10 @@ Coord NewNavProb(Vector <InputData> &inData, Vector <Ephemeris> &eph){
 		
 		RDUMP(pow(pow(obsVect[0][0], 2) + pow(obsVect[1][0], 2) + pow(obsVect[2][0], 2) , 0.5));
 		
+		x[0] += obsVect[0][0];
+		x[1] += obsVect[1][0];
+		x[2] += obsVect[2][0];
+		
 		LOG("correction");
 		MatrMultiply(HMatr, obsVect);
 		
@@ -322,22 +342,24 @@ Coord NewNavProb(Vector <InputData> &inData, Vector <Ephemeris> &eph){
 		W[3][3] = 1./abs(obsVect[3][0]);
 		W[4][4] = 1./abs(obsVect[4][0]);
 		
-		/*
+		
 		double W[5][5] = {{1./abs(obsVect[0][0]),0,0,0,0},
 							{0,1./abs(obsVect[1][0]),0,0,0},
 							{0,0,1./abs(obsVect[2][0]),0,0},
 							{0,0,0,1./abs(obsVect[3][0]),0},
 							{0,0,0,0,1./abs(obsVect[4][0])}};
-		*/
+	
+		
 		for (int i = 0; i < 5; i++){
 			for (int j = 0; j < 5; j++){
-				WMatr[i][j]  = W[i][j];
+				WMatr[i][j] = W[i][j];
 			}
 		}
 		LOG("matr VES");
 		for (int i = 0; i < 5; i++){
 			LOG(AsString(WMatr[i][0]) << " " << AsString(WMatr[i][1]) << " " << AsString(WMatr[i][2]) << " " << AsString(WMatr[i][3]) << " " << AsString(WMatr[i][4]));
 		}
+		
 		
 		/*
 		double w1 = sqrt(sqr(abs(obsVect[0][0])*1000.) - sqr(2830807.42226821));
@@ -348,8 +370,6 @@ Coord NewNavProb(Vector <InputData> &inData, Vector <Ephemeris> &eph){
 		RDUMP(w2);
 		RDUMP(w3);
 		RDUMP(w4);
-		
-		
 		/*
 		lat = 55.9121311
 		lon = 37.8090947
